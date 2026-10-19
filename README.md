@@ -4,14 +4,14 @@ Do breast cancer (BC) and hypertension (HTN) share disease genes, and do their g
 
 ## Inputs
 
-| File | Content |
-| --- | --- |
-| `../our_paper/sep_25/DataS1_interactome.tsv` | Menche interactome (genes as Entrez IDs). A copy is also kept in `inputs/` |
-| `inputs/hgnc_complete_set.txt` | HGNC table, used to map Entrez IDs to gene symbols |
-| `inputs/diseases/Breast Cancer.tsv` | Open Targets gene–disease associations for BC |
-| `inputs/diseases/hypertensive disorder-MONDO_0005044.tsv` | Same, for HTN |
-| `inputs/diseases/systolic blood pressure-EFO_0006335.tsv` | Same, for SBP |
-| `inputs/menche_sourcecode/`, `inputs/menche_paper/` | Reference code, paper and supplementary material |
+| File                                                        | Content                                                                      |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| `inputs/DataS1_interactome.tsv`                           | Menche interactome (genes as Entrez IDs). A copy is also kept in `inputs/` |
+| `inputs/hgnc_complete_set.txt`                            | HGNC table, used to map Entrez IDs to gene symbols                           |
+| `inputs/diseases/Breast Cancer.tsv`                       | Open Targets gene–disease associations for BC                               |
+| `inputs/diseases/hypertensive disorder-MONDO_0005044.tsv` | Same, for HTN                                                                |
+| `inputs/diseases/systolic blood pressure-EFO_0006335.tsv` | Same, for SBP                                                                |
+| `inputs/menche_sourcecode/`, `inputs/menche_paper/`     | Reference code, paper and supplementary material                             |
 
 ## Pipeline
 
@@ -39,19 +39,19 @@ Run the notebooks in this order from the project folder.
 
 Writes standalone HTML pages (vis-network, loaded from a CDN). The big network is split into Louvain modules, and each module is drawn in its own circle. Genes in several diseases are drawn as pies of the disease colours. The module of every gene is saved as `<view>_modules.csv`.
 
-| Folder in `outputs/cutoff_0.1/` | Views |
-| --- | --- |
-| `network_BC_HTN/` | `all_genes.html`, `shared_bridges.html` (shared genes and their neighbours), `cross_links.html` (links between BC and HTN) |
-| `network_BC_HTN_SBP/` | `all_genes.html`, `shared_bridges.html` (genes in 2+ diseases and their neighbours) |
-| `network_RAS/` | `ras_network.html` and `ras_genes_summary.csv`: the 23 renin–angiotensin system genes and the disease genes linked to them |
+| Folder in `outputs/cutoff_0.1/` | Views                                                                                                                            |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `network_BC_HTN/`               | `all_genes.html`, `shared_bridges.html` (shared genes and their neighbours), `cross_links.html` (links between BC and HTN) |
+| `network_BC_HTN_SBP/`           | `all_genes.html`, `shared_bridges.html` (genes in 2+ diseases and their neighbours)                                          |
+| `network_RAS/`                  | `ras_network.html` and `ras_genes_summary.csv`: the 23 renin–angiotensin system genes and the disease genes linked to them  |
 
 ## Main results (cutoff 0.1, uniform model)
 
-| Pair | Shared genes | Fold enrichment | s_AB | z-score |
-| --- | --- | --- | --- | --- |
-| BC – HTN | 689 | 1.71 | −0.315 | −7.4 |
-| BC – SBP | 660 | 1.39 | −0.289 | −3.5 |
-| HTN – SBP (control) | 869 | 2.92 | −0.536 | −23.2 |
+| Pair                 | Shared genes | Fold enrichment | s_AB    | z-score |
+| -------------------- | ------------ | --------------- | ------- | ------- |
+| BC – HTN            | 689          | 1.71            | −0.315 | −7.4   |
+| BC – SBP            | 660          | 1.39            | −0.289 | −3.5   |
+| HTN – SBP (control) | 869          | 2.92            | −0.536 | −23.2  |
 
 All three diseases form significant modules (LCC z-score: BC 14.2, HTN 6.3, SBP 5.1). The full write-up is in `Report.pdf`.
 
