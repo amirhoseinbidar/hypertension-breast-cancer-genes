@@ -1,24 +1,60 @@
 # Hypertension – Breast Cancer: network analysis
 
-Tests whether breast cancer (BC) and hypertension share disease genes and sit close together on the human protein–protein interactome. It follows the disease-module approach of Menche et al. 2015 (*Uncovering disease-disease relationships through the incomplete interactome*). Systolic blood pressure (SBP) is included as a positive control for HTN.
+Do breast cancer (BC) and hypertension (HTN) share disease genes, and do their genes sit close together on the human protein–protein interactome? The project follows the disease-module method of Menche et al. 2015 (*Uncovering disease-disease relationships through the incomplete interactome*). Systolic blood pressure (SBP) is included as a positive control for HTN.
 
-## Inputs (`inputs/`)
-- `DataS1_interactome.tsv`: Menche interactome, with genes given as Entrez IDs
-- `hgnc_complete_set.txt`: HGNC table, used to map Entrez IDs to gene symbols
-- `diseases/*.tsv`: Open Targets gene–disease associations for BC, hypertensive disorder (MONDO_0005044) and SBP (EFO_0006335)
-- `menche_sourcecode/`, `menche_paper/`: reference code and paper
+## Inputs
 
-## Pipeline (run the notebooks in this order)
-1. **`data_process_entrez.ipynb`** maps the interactome to gene symbols, removes self-interactions and reports unmapped genes.
-   Writes `outputs/interactome/` (`interactome_both_symbols.csv` is the network used downstream).
-2. **`disease_gene_overlap.ipynb`**
-   - Picks the `globalScore` cutoff: the lowest score above every gene supported only by weak, down-weighted sources (literature, expression, mouse, biomarkers).
-   - Gene overlap per disease pair: Jaccard index, overlap coefficient, fold enrichment and hypergeometric p-value, plus a cutoff sensitivity check.
-   - Menche network measures: **localization** (LCC size and mean shortest distance d_s) and **separation** s_AB, each with a z-score against random gene sets. Set `RANDOM_MODEL` to `"uniform"` or `"degree"`.
-   - Writes `outputs/cutoff_<value>/` with `gene_overlap.csv`, `localization_*.csv`, `separation_*.csv` and `gene_lists/*.txt`.
-3. **`visualize_network.ipynb`** builds interactive HTML views (vis-network) of the BC + HTN network, the BC + HTN + SBP network and the RAS genes. Writes `outputs/cutoff_0.4/network_*/`.
+| File | Content |
+| --- | --- |
+| `../our_paper/sep_25/DataS1_interactome.tsv` | Menche interactome (genes as Entrez IDs). A copy is also kept in `inputs/` |
+| `inputs/hgnc_complete_set.txt` | HGNC table, used to map Entrez IDs to gene symbols |
+| `inputs/diseases/Breast Cancer.tsv` | Open Targets gene–disease associations for BC |
+| `inputs/diseases/hypertensive disorder-MONDO_0005044.tsv` | Same, for HTN |
+| `inputs/diseases/systolic blood pressure-EFO_0006335.tsv` | Same, for SBP |
+| `inputs/menche_sourcecode/`, `inputs/menche_paper/` | Reference code, paper and supplementary material |
 
-`Report.pdf` summarises the results.
+## Pipeline
+
+Run the notebooks in this order from the project folder.
+
+### 1. `data_process_entrez.ipynb`: build the interactome
+
+- Maps Entrez IDs to gene symbols with the `entrez_id` column of HGNC.
+- Lists the 126 Entrez IDs that have no HGNC symbol. An optional cell (needs internet) asks NCBI whether each ID was replaced, discontinued or is still live.
+- Checks that known pairs (TP53–MDM2, BRCA1–BARD1, …) are present.
+- Removes self-interactions and duplicate pairs (A–B = B–A).
+- Writes `outputs/interactome/`. **`interactome_both_symbols.csv`** (edges where both genes have a symbol) is the network used by the later steps.
+
+### 2. `disease_gene_overlap.ipynb`: overlap and network measures
+
+- **Disease genes:** genes with Open Targets `globalScore ≥ CUTOFF` (0.1) that are on the network.
+- **Gene overlap** for each disease pair: Jaccard index, overlap coefficient, fold enrichment and hypergeometric p-value. A sensitivity check repeats this at cutoffs 0.2–0.5.
+- **Localization** (Menche): size of the largest connected component (LCC) and mean distance d_s to the nearest gene of the same disease.
+- **Separation** (Menche): s_AB = ⟨d_AB⟩ − (⟨d_AA⟩ + ⟨d_BB⟩)/2. A negative value means the two disease modules overlap.
+- Each measure gets a z-score against `N_SIMS = 10000` random gene sets. `RANDOM_MODEL` is `"uniform"` (Menche's full randomization) or `"degree"` (degree-matched).
+- All gene-pair distances are computed once as a matrix (about 180 MB). The random repeats run in parallel with `multiprocessing` (`fork`, Linux only).
+- Writes `outputs/cutoff_0.1/`: `gene_overlap.csv`, `localization_<model>.csv`, `separation_<model>.csv` and `gene_lists/{BC,HTN,SBP}.txt`.
+
+### 3. `visualize_network.ipynb`: interactive network views
+
+Writes standalone HTML pages (vis-network, loaded from a CDN). The big network is split into Louvain modules, and each module is drawn in its own circle. Genes in several diseases are drawn as pies of the disease colours. The module of every gene is saved as `<view>_modules.csv`.
+
+| Folder in `outputs/cutoff_0.1/` | Views |
+| --- | --- |
+| `network_BC_HTN/` | `all_genes.html`, `shared_bridges.html` (shared genes and their neighbours), `cross_links.html` (links between BC and HTN) |
+| `network_BC_HTN_SBP/` | `all_genes.html`, `shared_bridges.html` (genes in 2+ diseases and their neighbours) |
+| `network_RAS/` | `ras_network.html` and `ras_genes_summary.csv`: the 23 renin–angiotensin system genes and the disease genes linked to them |
+
+## Main results (cutoff 0.1, uniform model)
+
+| Pair | Shared genes | Fold enrichment | s_AB | z-score |
+| --- | --- | --- | --- | --- |
+| BC – HTN | 689 | 1.71 | −0.315 | −7.4 |
+| BC – SBP | 660 | 1.39 | −0.289 | −3.5 |
+| HTN – SBP (control) | 869 | 2.92 | −0.536 | −23.2 |
+
+All three diseases form significant modules (LCC z-score: BC 14.2, HTN 6.3, SBP 5.1). The full write-up is in `Report.pdf`.
 
 ## Requirements
-Python 3 with `pandas`, `numpy`, `networkx`, `openpyxl`, Jupyter.
+
+Python 3 with `pandas`, `numpy`, `networkx` (3.4 or later, for `forceatlas2_layout`), `openpyxl` and Jupyter. Run on Linux, because step 2 uses `fork`.
